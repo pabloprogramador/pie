@@ -20,4 +20,10 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
 	  <CreatePackage>false</CreatePackage>
 	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="SkiaSharp.Views.Maui.Core" Version="2.88.6" />
+	  <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.6" />
+	  <PackageReference Include="SkiaSharp.Views.Maui.Controls.Compatibility" Version="2.88.6" />
+	  <PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="2.0.0-preview.86" />
+	</ItemGroup>
 </Project>

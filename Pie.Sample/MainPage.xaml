@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pie="clr-namespace:Pie;assembly=Pie"
              x:Class="Pie.Sample.MainPage">
 
     <ScrollView>
@@ -9,11 +10,7 @@
             Padding="30,0"
             VerticalOptions="Center">
 
-            <Image
-                Source="dotnet_bot.png"
-                SemanticProperties.Description="Cute dot net bot waving hi to you!"
-                HeightRequest="200"
-                HorizontalOptions="Center" />
+            <pie:Pie WidthRequest="300" HeightRequest="400" />
 
             <Label
                 Text="Hello, World!"
