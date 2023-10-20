@@ -1,4 +1,6 @@
 ﻿using System;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
@@ -8,33 +10,84 @@ namespace Pie
 {
     public class Pie : Grid
     {
+
+        public static readonly BindableProperty IsHalfCircleProperty = BindableProperty.Create(
+            nameof(IsHalfCircle),
+            typeof(bool),
+            typeof(Pie),
+            defaultValue: false,
+            defaultBindingMode: BindingMode.OneWay,
+            propertyChanged: IsHalfCirclePropertyChanged);
+
+        private static void IsHalfCirclePropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var control = (Pie)bindable;
+            control.ChangeMaxCircle();
+        }
+
+        public bool IsHalfCircle
+        {
+            get { return (bool)base.GetValue(IsHalfCircleProperty); }
+            set { base.SetValue(IsHalfCircleProperty, value); }
+        }
+
+
+        public double SizeCircle = 360;
+        public float StrokeWidth { get; set; } = 50;
+        public int Round { get; set; } = 5;
+        public Color Color { get; set; } = Color.FromArgb("#84CEB2");
+        public Color ColorZero { get; set; } = Color.FromArgb("#E1E2E4");
+        public double MinOpacity { get; set; } = .1;
+        public int Spacing { get; set; } = 3;
+        public int MarginWholeCircle { get; set; } = 30;
+
+        private PieSkia _pieSkia;
+        private int _wholeCircle = 360;
+        private int _halfCircle = 183;
+
         public Pie()
         {
-            var cancasView = new PieSkia(this);
-            this.Children.Add(cancasView);
+            
         }
+
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            _pieSkia = new PieSkia(this, width - (MarginWholeCircle * 2), height);
+            this.Children.Add(_pieSkia);
+        }
+
+        private void ChangeMaxCircle()
+        {
+            double sizeCircle = IsHalfCircle ? _halfCircle : _wholeCircle;
+
+            var animation = new Animation((v) => {
+                this.SizeCircle = v;
+                _pieSkia.InvalidateSurface();
+            }, this.SizeCircle, sizeCircle, Easing.CubicOut);
+
+            animation.Commit(this, "MaxCircle", 16, 1000);
+        }
+
     }
 
 	public class PieSkia : SKCanvasView
     {
-        private readonly Pie _view;
-        private float _strokeWidth = 40.0f;
-        private int _round = 5;
-        private Color _color = Color.FromArgb("#84CEB2");
-        private Color _colorZero = Color.FromArgb("#E1E2E4");
-        private double _minOpacity = .1;
-        private int _spacing = 3;
+        private Pie _view;
+        private double _width;
+        private double _height;
+        
         private List<double> _values = new List<double>() { 300, 100, 50, 20};
-        private int _maxCirlce = 360;
 
-        #region privates
         private double _total;
         private float _radius;
-        #endregion
+        
 
-        public PieSkia(Pie view)
+        public PieSkia(Pie view, double width, double height)
         {
             _view = view;
+            _width = width;
+            _height = height;
             this.IgnorePixelScaling = true;
         }
 
@@ -52,7 +105,7 @@ namespace Pie
 
         private void Draw(SKCanvas canvas, SKImageInfo info, SKRect bounds)
         {
-            _radius = ((float)_view.WidthRequest / 2) - _strokeWidth;
+            _radius = ((float)_width / 2) - _view.StrokeWidth;
             _total = _values.Sum();
 
 
@@ -65,73 +118,68 @@ namespace Pie
             {
                 int pos = -90;
                 int i = 1;
-                double totalO = 1 - _minOpacity;
+                double totalO = 1 - _view.MinOpacity;
                 double totalV = _values.Count;
                 foreach (var item in _values)
                 {
-                    int end = (int)Math.Round(item * (_maxCirlce - (_spacing * _values.Count)) / _total);
-                    double opacity = 1 - (i * totalO / totalV) + _minOpacity;
+                    int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * _values.Count)) / _total);
+                    double opacity = 1 - (i * totalO / totalV) + _view.MinOpacity;
                     Item(pos, end, opacity, canvas, bounds);
-                    pos += (end + _spacing);
+                    pos += (end + _view.Spacing);
                     i++;
                 }
             }
-
-            
         }
 
         private void Zero(SKCanvas canvas, SKRect bounds)
         {
-            float width = (float)_view.WidthRequest;
-            float height = (float)_view.HeightRequest;
-            var center = new SKPoint(width / 2, height / 2);
+            float width = (float)_width;
+            float height = (float)_height;
+            var center = new SKPoint(_view.MarginWholeCircle + (width / 2), height / 2);
 
-            // Desenhe o círculo de fundo
             using (var backgroundPaint = new SKPaint
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
-                Color = _colorZero.ToSKColor(),
-                StrokeWidth = _strokeWidth
+                Color = _view.ColorZero.ToSKColor(),
+                StrokeWidth = _view.StrokeWidth
             })
             {
-                canvas.DrawCircle(center, _radius + (_strokeWidth / 2), backgroundPaint);
+                canvas.DrawCircle(center, _radius + (_view.StrokeWidth / 2), backgroundPaint);
             }
         }
 
         private void Item(int startAngle, int sweepAngle, double opacity, SKCanvas canvas, SKRect bounds)
         {
-            float width = (float)_view.WidthRequest;
-            float height = (float)_view.HeightRequest;
-            var center = new SKPoint(width / 2, height / 2);
+            float width = (float)_width;
+            float height = (float)_height;
+            var center = new SKPoint(_view.MarginWholeCircle + (width / 2), height / 2);
 
-
-            // Desenhe o arco de carregamento
             using (var loadingPaint = new SKPaint
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill,
-                Color = _color.ToSKColor().WithAlpha((byte)(0xFF * opacity))
+                Color = _view.Color.ToSKColor().WithAlpha((byte)(0xFF * opacity))
             })
             {
                 float radiusA = _radius;
                 var lineA = GetLine(center, radiusA);
-                var lineApos = GetPosition(center, startAngle, sweepAngle, radiusA + _round);
+                var lineApos = GetPosition(center, startAngle, sweepAngle, radiusA + _view.Round);
                 var lineAposOri = GetPosition(center, startAngle, sweepAngle, radiusA);
-                var lineAposSec = GetPosition(center, startAngle + _round / 2, sweepAngle - _round, radiusA);
+                var lineAposSec = GetPosition(center, startAngle + _view.Round / 2, sweepAngle - _view.Round, radiusA);
 
-                var radiusB = _radius + _strokeWidth;
+                var radiusB = _radius + _view.StrokeWidth;
                 var lineB = GetLine(center, radiusB);
-                var lineBpos = GetPosition(center, startAngle, sweepAngle, radiusB - _round);
+                var lineBpos = GetPosition(center, startAngle, sweepAngle, radiusB - _view.Round);
                 var lineBposOri = GetPosition(center, startAngle, sweepAngle, radiusB);
-                var lineBposSec = GetPosition(center, startAngle + _round / 2, sweepAngle - _round, radiusB);
+                var lineBposSec = GetPosition(center, startAngle + _view.Round / 2, sweepAngle - _view.Round, radiusB);
 
                 var pathB = new SKPath();
-                pathB.AddArc(lineB, startAngle + _round/2, sweepAngle - _round);
+                pathB.AddArc(lineB, startAngle + _view.Round /2, sweepAngle - _view.Round);
 
 
                 var path = new SKPath();
-                path.AddArc(lineA, startAngle + _round/2, sweepAngle - _round);
+                path.AddArc(lineA, startAngle + _view.Round /2, sweepAngle - _view.Round);
                
                 path.QuadTo(
                     new SKPoint(lineAposOri.End.X, lineAposOri.End.Y),
