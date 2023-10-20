@@ -19,12 +19,13 @@ namespace Pie
     {
         private readonly Pie _view;
         private float _strokeWidth = 40.0f;
-        private int _round = 10;
+        private int _round = 5;
         private Color _color = Color.FromArgb("#84CEB2");
         private Color _colorZero = Color.FromArgb("#E1E2E4");
-        private double _minOpacity = .2;
-        private double _spacing = 10;
+        private double _minOpacity = .1;
+        private int _spacing = 3;
         private List<double> _values = new List<double>() { 300, 100, 50, 20};
+        private int _maxCirlce = 360;
 
         #region privates
         private double _total;
@@ -56,9 +57,26 @@ namespace Pie
 
 
             canvas.Clear();
-            //Zero(canvas, bounds);
+            if (_values == null)
+            {
+                Zero(canvas, bounds);
+            }
+            else
+            {
+                int pos = -90;
+                int i = 1;
+                double totalO = 1 - _minOpacity;
+                double totalV = _values.Count;
+                foreach (var item in _values)
+                {
+                    int end = (int)Math.Round(item * (_maxCirlce - (_spacing * _values.Count)) / _total);
+                    double opacity = 1 - (i * totalO / totalV) + _minOpacity;
+                    Item(pos, end, opacity, canvas, bounds);
+                    pos += (end + _spacing);
+                    i++;
+                }
+            }
 
-            Item(0, 60, canvas, bounds);
             
         }
 
@@ -81,7 +99,7 @@ namespace Pie
             }
         }
 
-        private void Item(int startAngle, int sweepAngle, SKCanvas canvas, SKRect bounds)
+        private void Item(int startAngle, int sweepAngle, double opacity, SKCanvas canvas, SKRect bounds)
         {
             float width = (float)_view.WidthRequest;
             float height = (float)_view.HeightRequest;
@@ -93,7 +111,7 @@ namespace Pie
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill,
-                Color = _color.ToSKColor().WithAlpha((byte)(0xFF * 1))
+                Color = _color.ToSKColor().WithAlpha((byte)(0xFF * opacity))
             })
             {
                 float radiusA = _radius;
