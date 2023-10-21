@@ -31,8 +31,8 @@ namespace Pie
             set { base.SetValue(IsHalfCircleProperty, value); }
         }
 
-
-        public double SizeCircle = 360;
+        public List<double> Values { get; set; } = new List<double>() { 300, 100, 50, 20 };
+        public double SizeCircle { get; set; } = 360;
         public float StrokeWidth { get; set; } = 50;
         public int Round { get; set; } = 5;
         public Color Color { get; set; } = Color.FromArgb("#84CEB2");
@@ -40,33 +40,53 @@ namespace Pie
         public double MinOpacity { get; set; } = .1;
         public int Spacing { get; set; } = 3;
         public int MarginWholeCircle { get; set; } = 30;
+        public uint TimeAnimation { get; set; } = 1000;
 
         private PieSkia _pieSkia;
         private int _wholeCircle = 360;
         private int _halfCircle = 183;
+        private List<double> _valuesOld;
 
         public Pie()
         {
             
         }
 
-        protected override void OnSizeAllocated(double width, double height)
+        protected async override void OnSizeAllocated(double width, double height)
         {
             base.OnSizeAllocated(width, height);
             _pieSkia = new PieSkia(this, width - (MarginWholeCircle * 2), height);
             this.Children.Add(_pieSkia);
+            //ChangeMaxCircleByValue(_wholeCircle);
         }
 
         private void ChangeMaxCircle()
         {
+            if (_pieSkia == null) return;
             double sizeCircle = IsHalfCircle ? _halfCircle : _wholeCircle;
+            ChangeMaxCircleByValue(sizeCircle);
+            if (IsHalfCircle)
+            {
+                this.TranslateTo(-(this.Width/2), 0, TimeAnimation, Easing.CubicOut);
+                this.ScaleTo(.8, TimeAnimation, Easing.CubicInOut);
+            }
+            else
+            {
+                this.TranslateTo(0, 0, TimeAnimation, Easing.CubicOut);
+                this.ScaleTo(1, TimeAnimation, Easing.CubicOut);
+            }
+        }
+
+        private void ChangeMaxCircleByValue(double value)
+        {
+            if (_pieSkia == null) return;
 
             var animation = new Animation((v) => {
                 this.SizeCircle = v;
                 _pieSkia.InvalidateSurface();
-            }, this.SizeCircle, sizeCircle, Easing.CubicOut);
+            }, this.SizeCircle, value, Easing.CubicOut);
 
-            animation.Commit(this, "MaxCircle", 16, 1000);
+            animation.Commit(this, "MaxCircle", 16, TimeAnimation);
         }
 
     }
@@ -76,12 +96,8 @@ namespace Pie
         private Pie _view;
         private double _width;
         private double _height;
-        
-        private List<double> _values = new List<double>() { 300, 100, 50, 20};
-
         private double _total;
         private float _radius;
-        
 
         public PieSkia(Pie view, double width, double height)
         {
@@ -106,23 +122,21 @@ namespace Pie
         private void Draw(SKCanvas canvas, SKImageInfo info, SKRect bounds)
         {
             _radius = ((float)_width / 2) - _view.StrokeWidth;
-            _total = _values.Sum();
-
-
             canvas.Clear();
-            if (_values == null)
+            if (_view.Values == null)
             {
                 Zero(canvas, bounds);
             }
             else
             {
+                _total = _view.Values.Sum();
                 int pos = -90;
                 int i = 1;
                 double totalO = 1 - _view.MinOpacity;
-                double totalV = _values.Count;
-                foreach (var item in _values)
+                double totalV = _view.Values.Count;
+                foreach (var item in _view.Values)
                 {
-                    int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * _values.Count)) / _total);
+                    int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * _view.Values.Count)) / _total);
                     double opacity = 1 - (i * totalO / totalV) + _view.MinOpacity;
                     Item(pos, end, opacity, canvas, bounds);
                     pos += (end + _view.Spacing);

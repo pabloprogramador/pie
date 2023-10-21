@@ -21,12 +21,12 @@
 
             <Grid ColumnDefinitions="*,*" Margin="30,0" ColumnSpacing="10">
                 <Button
-                Text="Valor 1 Clicked"
-                Clicked="OnCounterClicked"
+                Text="Whole / Half"
+                Command="{Binding ChangeHalfCircleCommand}"
                  />
 
                 <Button Grid.Column="1"
-                Text="Valor 1 ViewModel"
+                Text="Change Values"
                 Command="{Binding ChangeHalfCircleCommand}"
                  />
 
