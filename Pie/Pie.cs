@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
@@ -31,14 +32,40 @@ namespace Pie
             set { base.SetValue(IsHalfCircleProperty, value); }
         }
 
-        public List<double> Values { get; set; } = new List<double>() { 300, 100, 50, 20 };
+        public static readonly BindableProperty ValuesProperty = BindableProperty.Create(
+            nameof(Values),
+            typeof(List<double>),
+            typeof(Pie),
+            defaultValue: null,
+            defaultBindingMode: BindingMode.OneWay,
+            propertyChanged: ValuesPropertyChanged);
+
+        private static void ValuesPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var control = (Pie)bindable;
+            var oldList = (List<double>)oldValue;
+            var newList = (List<double>)newValue;
+           
+            if (oldList == null || newList == null || !newList.SequenceEqual(oldList))
+            {    
+                control.ChangeValues();
+            }
+        }
+
+        public List<double> Values
+        {
+            get { return (List<double>)base.GetValue(ValuesProperty); }
+            set { base.SetValue(ValuesProperty, value); }
+        }
+
+        public List<double> ValuesTemp;
         public double SizeCircle { get; set; } = 360;
         public float StrokeWidth { get; set; } = 50;
-        public int Round { get; set; } = 5;
+        public int Round { get; set; } = 3;
         public Color Color { get; set; } = Color.FromArgb("#84CEB2");
         public Color ColorZero { get; set; } = Color.FromArgb("#E1E2E4");
         public double MinOpacity { get; set; } = .1;
-        public int Spacing { get; set; } = 3;
+        public int Spacing { get; set; } = 2;
         public int MarginWholeCircle { get; set; } = 30;
         public uint TimeAnimation { get; set; } = 1000;
 
@@ -49,7 +76,7 @@ namespace Pie
 
         public Pie()
         {
-            
+
         }
 
         protected async override void OnSizeAllocated(double width, double height)
@@ -57,17 +84,17 @@ namespace Pie
             base.OnSizeAllocated(width, height);
             _pieSkia = new PieSkia(this, width - (MarginWholeCircle * 2), height);
             this.Children.Add(_pieSkia);
-            //ChangeMaxCircleByValue(_wholeCircle);
+            ChangeValues();
         }
 
-        private void ChangeMaxCircle()
+        private async void ChangeMaxCircle()
         {
             if (_pieSkia == null) return;
             double sizeCircle = IsHalfCircle ? _halfCircle : _wholeCircle;
             ChangeMaxCircleByValue(sizeCircle);
             if (IsHalfCircle)
             {
-                this.TranslateTo(-(this.Width/2), 0, TimeAnimation, Easing.CubicOut);
+                this.TranslateTo(-(this.Width / 2), 0, TimeAnimation, Easing.CubicOut);
                 this.ScaleTo(.8, TimeAnimation, Easing.CubicInOut);
             }
             else
@@ -81,17 +108,74 @@ namespace Pie
         {
             if (_pieSkia == null) return;
 
-            var animation = new Animation((v) => {
+            var animation = new Animation((v) =>
+            {
                 this.SizeCircle = v;
                 _pieSkia.InvalidateSurface();
             }, this.SizeCircle, value, Easing.CubicOut);
 
-            animation.Commit(this, "MaxCircle", 16, TimeAnimation);
+            animation.Commit(this, "PieMaxCircle", 16, TimeAnimation);
         }
 
+        private void ChangeValues()
+        {
+
+            if (_pieSkia == null) return;
+
+            //if (_isBusy) return; _isBusy = true;
+
+            if (Values == null || !Values.Any())
+            {
+                ValuesTemp = null;
+                _valuesOld = null;
+                _pieSkia.InvalidateSurface();
+                return;
+            }
+
+            ValuesTemp = Values.ToList();
+
+            if (_valuesOld == null)
+            {
+                _valuesOld = Values.ToList();
+                this.SizeCircle = 50;
+                _pieSkia.InvalidateSurface();
+                ChangeMaxCircleByValue(_wholeCircle);
+                return;
+            }
+
+            var animation = new Animation((v) =>
+            {
+                if (Values == null) { return; }
+                var temp = Values.ToList();
+                int i = 0;
+                foreach (var item in temp)
+                {
+                    if (_valuesOld.Count > i)
+                    {
+                        double old = _valuesOld[i];
+                        if (ValuesTemp.Count > i)
+                            ValuesTemp[i] = old + ((item - old) * v);
+                    }
+                    else
+                    {
+                        if (ValuesTemp.Count > i)
+                            ValuesTemp[i] = item * v;
+                    }
+                    i++;
+                }
+                _pieSkia.InvalidateSurface();
+            }, 0, 1, Easing.CubicOut);
+
+            animation.Commit(this, "PieValues", 16, TimeAnimation, Easing.CubicOut,
+                 (double v, bool s) =>
+                 {
+                     if (Values == null) { return; }
+                     _valuesOld = Values.ToList();
+                 });
+        }
     }
 
-	public class PieSkia : SKCanvasView
+    public class PieSkia : SKCanvasView
     {
         private Pie _view;
         private double _width;
@@ -123,20 +207,20 @@ namespace Pie
         {
             _radius = ((float)_width / 2) - _view.StrokeWidth;
             canvas.Clear();
-            if (_view.Values == null)
+            if (_view.ValuesTemp == null || !_view.ValuesTemp.Any())
             {
                 Zero(canvas, bounds);
             }
             else
             {
-                _total = _view.Values.Sum();
+                _total = _view.ValuesTemp.Sum();
                 int pos = -90;
                 int i = 1;
                 double totalO = 1 - _view.MinOpacity;
-                double totalV = _view.Values.Count;
-                foreach (var item in _view.Values)
+                double totalV = _view.ValuesTemp.Count;
+                foreach (var item in _view.ValuesTemp)
                 {
-                    int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * _view.Values.Count)) / _total);
+                    int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * _view.ValuesTemp.Count)) / _total);
                     double opacity = 1 - (i * totalO / totalV) + _view.MinOpacity;
                     Item(pos, end, opacity, canvas, bounds);
                     pos += (end + _view.Spacing);
@@ -150,7 +234,6 @@ namespace Pie
             float width = (float)_width;
             float height = (float)_height;
             var center = new SKPoint(_view.MarginWholeCircle + (width / 2), height / 2);
-
             using (var backgroundPaint = new SKPaint
             {
                 IsAntialias = true,
@@ -189,12 +272,12 @@ namespace Pie
                 var lineBposSec = GetPosition(center, startAngle + _view.Round / 2, sweepAngle - _view.Round, radiusB);
 
                 var pathB = new SKPath();
-                pathB.AddArc(lineB, startAngle + _view.Round /2, sweepAngle - _view.Round);
+                pathB.AddArc(lineB, startAngle + _view.Round / 2, sweepAngle - _view.Round);
 
 
                 var path = new SKPath();
-                path.AddArc(lineA, startAngle + _view.Round /2, sweepAngle - _view.Round);
-               
+                path.AddArc(lineA, startAngle + _view.Round / 2, sweepAngle - _view.Round);
+
                 path.QuadTo(
                     new SKPoint(lineAposOri.End.X, lineAposOri.End.Y),
                     new SKPoint(lineApos.End.X, lineApos.End.Y));
@@ -206,7 +289,7 @@ namespace Pie
                     new SKPoint(lineBposSec.End.X, lineBposSec.End.Y));
 
                 path.AddPathReverse(pathB);
-                
+
                 path.QuadTo(
                      new SKPoint(lineBposOri.Start.X, lineBposOri.Start.Y),
                      new SKPoint(lineBpos.Start.X, lineBpos.Start.Y));
@@ -215,7 +298,6 @@ namespace Pie
                 path.QuadTo(
                      new SKPoint(lineAposOri.Start.X, lineAposOri.Start.Y),
                      new SKPoint(lineAposSec.Start.X, lineAposSec.Start.Y));
-                //path.Close();
                 canvas.DrawPath(path, loadingPaint);
             }
             canvas.Restore();
@@ -237,10 +319,11 @@ namespace Pie
             var endX = center.X + radius * (float)Math.Cos(endRadians);
             var endY = center.Y + radius * (float)Math.Sin(endRadians);
 
-            return new Position() {
+            return new Position()
+            {
                 Start = new SKPoint(startX, startY),
-                End = new SKPoint(endX, endY)};
-
+                End = new SKPoint(endX, endY)
+            };
         }
 
         class Position
