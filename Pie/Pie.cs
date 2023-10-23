@@ -220,7 +220,6 @@ namespace Pie
                 int pos = -90;
                 int i = 1;
                 double totalO = 1 - _view.MinOpacity;
-                var totalTemp = _view.ValuesTemp.Where(x => x > 0).Count();
                 var totalV = _view.Values.Count;
                 //i need this code for maintance
                 //double fix = totalTemp - totalV;
@@ -234,8 +233,9 @@ namespace Pie
                     else
                     {
                         _total = _view.ValuesTemp.Sum();
-                        int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalTemp)) / _total);
+                        int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalV)) / _total);
                         double opacity = i >= totalV ? _view.MinOpacity : 1 - (i * totalO / totalV) + _view.MinOpacity;
+                        end = end < _view.Round*2 ? _view.Round*2 : end;
                         Item(pos, end, opacity, canvas, bounds);
                         pos += (end + _view.Spacing);
                         i++;
