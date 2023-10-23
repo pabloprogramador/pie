@@ -40,6 +40,9 @@ namespace Pie.Sample
             ChangeValues1Command = new Command(ChangeValues1);
             ChangeValues2Command = new Command(ChangeValues2);
             ChangeValues3Command = new Command(ChangeValues3);
+            ChangeValues4Command = new Command(ChangeValues4);
+            ChangeValues5Command = new Command(ChangeValues5);
+            ChangeValues6Command = new Command(ChangeValues6);
             ClearValuesCommand = new Command(ClearValues);
         }
 
@@ -53,16 +56,38 @@ namespace Pie.Sample
         private void ChangeValues1()
         {
             Values = new List<double>() { 300, 100, 50, 20 };
+            IsHalfCircle = true;
         }
 
         public ICommand ChangeValues2Command { protected set; get; }
         private void ChangeValues2()
         {
             Values = new List<double>() { 30, 20 };
+            IsHalfCircle = true;
         }
 
         public ICommand ChangeValues3Command { protected set; get; }
         private void ChangeValues3()
+        {
+            Values = new List<double>() { 23, 80, 5, 30, 23, 9 };
+            IsHalfCircle = false;
+        }
+
+        public ICommand ChangeValues4Command { protected set; get; }
+        private void ChangeValues4()
+        {
+            Values = new List<double>() { 30, 10, 50, 20 };
+            IsHalfCircle = true;
+        }
+
+        public ICommand ChangeValues5Command { protected set; get; }
+        private void ChangeValues5()
+        {
+            Values = new List<double>() { 30, 20 , 1 , 1};
+        }
+
+        public ICommand ChangeValues6Command { protected set; get; }
+        private void ChangeValues6()
         {
             Values = new List<double>() { 23, 80, 5, 30, 23, 9 };
         }

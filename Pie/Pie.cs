@@ -11,7 +11,6 @@ namespace Pie
 {
     public class Pie : Grid
     {
-
         public static readonly BindableProperty IsHalfCircleProperty = BindableProperty.Create(
             nameof(IsHalfCircle),
             typeof(bool),
@@ -45,9 +44,9 @@ namespace Pie
             var control = (Pie)bindable;
             var oldList = (List<double>)oldValue;
             var newList = (List<double>)newValue;
-           
+
             if (oldList == null || newList == null || !newList.SequenceEqual(oldList))
-            {    
+            {
                 control.ChangeValues();
             }
         }
@@ -122,8 +121,6 @@ namespace Pie
 
             if (_pieSkia == null) return;
 
-            //if (_isBusy) return; _isBusy = true;
-
             if (Values == null || !Values.Any())
             {
                 ValuesTemp = null;
@@ -146,21 +143,28 @@ namespace Pie
             var animation = new Animation((v) =>
             {
                 if (Values == null) { return; }
-                var temp = Values.ToList();
+                var temp = Values.Count > _valuesOld.Count ? Values.ToList() : _valuesOld;
+                var values = Values.ToList();
+
                 int i = 0;
                 foreach (var item in temp)
                 {
-                    if (_valuesOld.Count > i)
+                    if (_valuesOld.Count <= i)
                     {
-                        double old = _valuesOld[i];
-                        if (ValuesTemp.Count > i)
-                            ValuesTemp[i] = old + ((item - old) * v);
+                        _valuesOld.Add(0);
                     }
-                    else
+                    if (values.Count <= i)
                     {
-                        if (ValuesTemp.Count > i)
-                            ValuesTemp[i] = item * v;
+                        values.Add(0);
                     }
+                    if (ValuesTemp.Count <= i)
+                    {
+                        ValuesTemp.Add(0);
+                    }
+
+                    double old = _valuesOld[i];
+                    ValuesTemp[i] = old + ((values[i] - old) * v);
+
                     i++;
                 }
                 _pieSkia.InvalidateSurface();
@@ -220,11 +224,15 @@ namespace Pie
                 double totalV = _view.ValuesTemp.Count;
                 foreach (var item in _view.ValuesTemp)
                 {
-                    int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * _view.ValuesTemp.Count)) / _total);
-                    double opacity = 1 - (i * totalO / totalV) + _view.MinOpacity;
-                    Item(pos, end, opacity, canvas, bounds);
-                    pos += (end + _view.Spacing);
-                    i++;
+                    var totalTemp = _view.ValuesTemp.Where(x => x > 1).Count();
+                    if (item > 0)
+                    {
+                        int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalTemp)) / _total);
+                        double opacity = 1 - (i * totalO / totalV) + _view.MinOpacity;
+                        Item(pos, end, opacity, canvas, bounds);
+                        pos += (end + _view.Spacing);
+                        i++;
+                    }
                 }
             }
         }
