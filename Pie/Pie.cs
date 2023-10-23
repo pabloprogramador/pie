@@ -168,13 +168,13 @@ namespace Pie
                     i++;
                 }
                 _pieSkia.InvalidateSurface();
-            }, 0, 1, Easing.CubicOut);
+            }, 0, 1);
 
-            animation.Commit(this, "PieValues", 16, TimeAnimation, Easing.CubicOut,
+            animation.Commit(this, "PieValues", 16, TimeAnimation, Easing.CubicInOut,
                  (double v, bool s) =>
                  {
                      if (Values == null) { return; }
-                     _valuesOld = Values.ToList();
+                     _valuesOld = Values.Where(x => x > 0).ToList();
                  });
         }
     }
@@ -217,18 +217,25 @@ namespace Pie
             }
             else
             {
-                _total = _view.ValuesTemp.Sum();
                 int pos = -90;
                 int i = 1;
                 double totalO = 1 - _view.MinOpacity;
-                double totalV = _view.ValuesTemp.Count;
-                foreach (var item in _view.ValuesTemp)
+                var totalTemp = _view.ValuesTemp.Where(x => x > 0).Count();
+                var totalV = _view.Values.Count;
+                //i need this code for maintance
+                //double fix = totalTemp - totalV;
+                //fix = fix > 0 ? fix : 0;
+                foreach (var item in _view.ValuesTemp.ToList())
                 {
-                    var totalTemp = _view.ValuesTemp.Where(x => x > 1).Count();
-                    if (item > 0)
+                    if ( _view.ValuesTemp[i-1]==0)
                     {
+                        _view.ValuesTemp.RemoveAt(i-1);
+                    }
+                    else
+                    {
+                        _total = _view.ValuesTemp.Sum();
                         int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalTemp)) / _total);
-                        double opacity = 1 - (i * totalO / totalV) + _view.MinOpacity;
+                        double opacity = i >= totalV ? _view.MinOpacity : 1 - (i * totalO / totalV) + _view.MinOpacity;
                         Item(pos, end, opacity, canvas, bounds);
                         pos += (end + _view.Spacing);
                         i++;

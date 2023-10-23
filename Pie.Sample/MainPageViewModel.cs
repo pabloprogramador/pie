@@ -55,41 +55,40 @@ namespace Pie.Sample
         public ICommand ChangeValues1Command { protected set; get; }
         private void ChangeValues1()
         {
-            Values = new List<double>() { 300, 100, 50, 20 };
+            Values = new List<double>() { 3000, 1000, 500, 50 };
             IsHalfCircle = true;
         }
 
         public ICommand ChangeValues2Command { protected set; get; }
         private void ChangeValues2()
         {
-            Values = new List<double>() { 30, 20 };
+            Values = new List<double>() { 300, 200 };
             IsHalfCircle = true;
         }
 
         public ICommand ChangeValues3Command { protected set; get; }
         private void ChangeValues3()
         {
-            Values = new List<double>() { 23, 80, 5, 30, 23, 9 };
+            Values = new List<double>() { 230, 80, 25, 300, 230, 90 };
             IsHalfCircle = false;
         }
 
         public ICommand ChangeValues4Command { protected set; get; }
         private void ChangeValues4()
         {
-            Values = new List<double>() { 30, 10, 50, 20 };
-            IsHalfCircle = true;
+            Values = new List<double>() { 30, 100, 50, 2 };
         }
 
         public ICommand ChangeValues5Command { protected set; get; }
         private void ChangeValues5()
         {
-            Values = new List<double>() { 30, 20 , 1 , 1};
+            Values = new List<double>() { 30, 50 , 1 , 1};
         }
 
         public ICommand ChangeValues6Command { protected set; get; }
         private void ChangeValues6()
         {
-            Values = new List<double>() { 23, 80, 5, 30, 23, 9 };
+            Values = new List<double>() { 23, 80, 30, 23, 90 };
         }
 
         public ICommand ClearValuesCommand { protected set; get; }

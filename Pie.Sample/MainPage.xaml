@@ -41,6 +41,25 @@
                  />
             </Grid>
 
+             <Grid ColumnDefinitions="*,*,*" Margin="30,0" ColumnSpacing="10">
+                <Button
+                Text="Value1s"
+                Command="{Binding ChangeValues4Command}"
+                 />
+
+                <Button Grid.Column="1"
+                Text="Values2"
+                Command="{Binding ChangeValues5Command}"
+                 />
+
+                <Button Grid.Column="2"
+                Text="Values3"
+                Command="{Binding ChangeValues6Command}"
+                 />
+            </Grid>
+
+
+
             <Button
                 Text="Clear Values" Margin="30,0" BackgroundColor="Red"
                 Command="{Binding ClearValuesCommand}"
