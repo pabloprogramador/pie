@@ -15,7 +15,7 @@ var builder = MauiApp.CreateBuilder();
       builder.UsePie();
 ```
 
-<img src="images/pie.gif" height="600">
+<img src="https://github.com/pabloprogramador/pie/blob/main/images/pie.gif" height="600">
 
 You can use the OpenView:
 ```html
