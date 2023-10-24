@@ -30,3 +30,22 @@ xmlns:pie="clr-namespace:Pie;assembly=Pie"
         HeightRequest="400"
     />
 ```
+or more advanced
+
+```html
+<pie:Pie x:Name="pgPie"
+                IsHalfCircle="{Binding IsHalfCircle}"
+                Values="{Binding Values}"
+                PieColor="{Binding PieColor}"
+                PieColors="{Binding PieColors}"
+                HorizontalOptions="FillAndExpand"
+                HeightRequest="400"
+                TimeAnimation="500"
+                SizeCircle="360"
+                StrokeWidth="80"
+                Round="7"
+                Spacing="3"
+                MinOpacity=".2"
+                MarginWholeCircle="20"
+                />
+```
