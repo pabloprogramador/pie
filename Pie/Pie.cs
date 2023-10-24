@@ -60,11 +60,11 @@ namespace Pie
         public List<double> ValuesTemp;
         public double SizeCircle { get; set; } = 360;
         public float StrokeWidth { get; set; } = 50;
-        public int Round { get; set; } = 3;
+        public int Round { get; set; } = 16;
         public Color Color { get; set; } = Color.FromArgb("#84CEB2");
         public Color ColorZero { get; set; } = Color.FromArgb("#E1E2E4");
         public double MinOpacity { get; set; } = .1;
-        public int Spacing { get; set; } = 2;
+        public int Spacing { get; set; } = 4;
         public int MarginWholeCircle { get; set; } = 30;
         public uint TimeAnimation { get; set; } = 1000;
 
@@ -235,7 +235,6 @@ namespace Pie
                         _total = _view.ValuesTemp.Sum();
                         int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalV)) / _total);
                         double opacity = i >= totalV ? _view.MinOpacity : 1 - (i * totalO / totalV) + _view.MinOpacity;
-                        end = end < _view.Round*2 ? _view.Round*2 : end;
                         Item(pos, end, opacity, canvas, bounds);
                         pos += (end + _view.Spacing);
                         i++;
@@ -266,7 +265,7 @@ namespace Pie
             float width = (float)_width;
             float height = (float)_height;
             var center = new SKPoint(_view.MarginWholeCircle + (width / 2), height / 2);
-
+            var round = (_view.Round * 2) > sweepAngle ? (int)Math.Floor((double)sweepAngle / 2) : _view.Round;
             using (var loadingPaint = new SKPaint
             {
                 IsAntialias = true,
@@ -276,22 +275,22 @@ namespace Pie
             {
                 float radiusA = _radius;
                 var lineA = GetLine(center, radiusA);
-                var lineApos = GetPosition(center, startAngle, sweepAngle, radiusA + _view.Round);
+                var lineApos = GetPosition(center, startAngle, sweepAngle, radiusA + round);
                 var lineAposOri = GetPosition(center, startAngle, sweepAngle, radiusA);
-                var lineAposSec = GetPosition(center, startAngle + _view.Round / 2, sweepAngle - _view.Round, radiusA);
+                var lineAposSec = GetPosition(center, startAngle + round / 2, sweepAngle - round, radiusA);
 
                 var radiusB = _radius + _view.StrokeWidth;
                 var lineB = GetLine(center, radiusB);
-                var lineBpos = GetPosition(center, startAngle, sweepAngle, radiusB - _view.Round);
+                var lineBpos = GetPosition(center, startAngle, sweepAngle, radiusB - round);
                 var lineBposOri = GetPosition(center, startAngle, sweepAngle, radiusB);
-                var lineBposSec = GetPosition(center, startAngle + _view.Round / 2, sweepAngle - _view.Round, radiusB);
+                var lineBposSec = GetPosition(center, startAngle + round / 2, sweepAngle - round, radiusB);
 
                 var pathB = new SKPath();
-                pathB.AddArc(lineB, startAngle + _view.Round / 2, sweepAngle - _view.Round);
+                pathB.AddArc(lineB, startAngle + round / 2, sweepAngle - round);
 
 
                 var path = new SKPath();
-                path.AddArc(lineA, startAngle + _view.Round / 2, sweepAngle - _view.Round);
+                path.AddArc(lineA, startAngle + round / 2, sweepAngle - round);
 
                 path.QuadTo(
                     new SKPoint(lineAposOri.End.X, lineAposOri.End.Y),
