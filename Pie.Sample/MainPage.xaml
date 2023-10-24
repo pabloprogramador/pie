@@ -19,6 +19,13 @@
                 PieColors="{Binding PieColors}"
                 HorizontalOptions="FillAndExpand"
                 HeightRequest="400"
+                TimeAnimation="500"
+                SizeCircle="360"
+                StrokeWidth="80"
+                Round="7"
+                Spacing="3"
+                MinOpacity=".2"
+                MarginWholeCircle="20"
                 />
 
             <Button
