@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Security.Cryptography;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
@@ -57,14 +58,55 @@ namespace Pie
             set { base.SetValue(ValuesProperty, value); }
         }
 
+        public static readonly BindableProperty PieColorProperty = BindableProperty.Create(
+            nameof(PieColor),
+            typeof(Color),
+            typeof(Pie),
+            defaultValue: null,
+            defaultBindingMode: BindingMode.OneWay,
+            propertyChanged: PieColorPropertyChanged);
+
+        private static void PieColorPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var control = (Pie)bindable;
+            if (oldValue != null)
+            {
+                control.ChangeColor();
+            }
+            else
+            {
+                control.PieColorTemp = (Color)newValue;
+            }
+        }
+
+        public Color PieColor
+        {
+            get { return (Color)base.GetValue(PieColorProperty); }
+            set { base.SetValue(PieColorProperty, value); }
+        }
+
+        public static readonly BindableProperty PieColorsProperty = BindableProperty.Create(
+            nameof(PieColors),
+            typeof(List<Color>),
+            typeof(Pie),
+            defaultValue: null,
+            defaultBindingMode: BindingMode.OneWay);
+
+        public List<Color> PieColors
+        {
+            get { return (List<Color>)base.GetValue(PieColorsProperty); }
+            set { base.SetValue(PieColorsProperty, value); }
+        }
+
+
         public List<double> ValuesTemp;
         public double SizeCircle { get; set; } = 360;
-        public float StrokeWidth { get; set; } = 50;
-        public int Round { get; set; } = 16;
-        public Color Color { get; set; } = Color.FromArgb("#84CEB2");
+        public float StrokeWidth { get; set; } = 60;
+        public int Round { get; set; } = 20;
+        public Color PieColorTemp;
         public Color ColorZero { get; set; } = Color.FromArgb("#E1E2E4");
         public double MinOpacity { get; set; } = .1;
-        public int Spacing { get; set; } = 4;
+        public int Spacing { get; set; } = 6;
         public int MarginWholeCircle { get; set; } = 30;
         public uint TimeAnimation { get; set; } = 1000;
 
@@ -75,7 +117,7 @@ namespace Pie
 
         public Pie()
         {
-
+            PieColorTemp = PieColor;
         }
 
         protected async override void OnSizeAllocated(double width, double height)
@@ -177,8 +219,28 @@ namespace Pie
                      _valuesOld = Values.Where(x => x > 0).ToList();
                  });
         }
+
+        private void ChangeColor()
+        {
+            var animation = new Animation((t) =>
+            {
+                if (PieColor == null) { return; }
+
+                PieColorTemp = Color.FromRgba(PieColorTemp.Red + t * (PieColor.Red - PieColorTemp.Red),
+                               PieColorTemp.Green + t * (PieColor.Green - PieColorTemp.Green),
+                               PieColorTemp.Blue + t * (PieColor.Blue - PieColorTemp.Blue),
+                               PieColorTemp.Alpha + t * (PieColor.Alpha - PieColorTemp.Alpha));
+
+                _pieSkia.InvalidateSurface();
+            }, 0, 1);
+
+            animation.Commit(this, "PieColor", 16, TimeAnimation, Easing.Linear);
+        }
     }
 
+    /// <summary>
+    /// PIESKIA
+    /// </summary>
     public class PieSkia : SKCanvasView
     {
         private Pie _view;
@@ -226,16 +288,16 @@ namespace Pie
                 //fix = fix > 0 ? fix : 0;
                 foreach (var item in _view.ValuesTemp.ToList())
                 {
-                    if ( _view.ValuesTemp[i-1]==0)
+                    if (_view.ValuesTemp[i - 1] == 0)
                     {
-                        _view.ValuesTemp.RemoveAt(i-1);
+                        _view.ValuesTemp.RemoveAt(i - 1);
                     }
                     else
                     {
                         _total = _view.ValuesTemp.Sum();
                         int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalV)) / _total);
                         double opacity = i >= totalV ? _view.MinOpacity : 1 - (i * totalO / totalV) + _view.MinOpacity;
-                        Item(pos, end, opacity, canvas, bounds);
+                        Item(i, pos, end, opacity, canvas, bounds);
                         pos += (end + _view.Spacing);
                         i++;
                     }
@@ -260,17 +322,38 @@ namespace Pie
             }
         }
 
-        private void Item(int startAngle, int sweepAngle, double opacity, SKCanvas canvas, SKRect bounds)
+        private void Item(int index, int startAngle, int sweepAngle, double opacity, SKCanvas canvas, SKRect bounds)
         {
             float width = (float)_width;
             float height = (float)_height;
             var center = new SKPoint(_view.MarginWholeCircle + (width / 2), height / 2);
             var round = (_view.Round * 2) > sweepAngle ? (int)Math.Floor((double)sweepAngle / 2) : _view.Round;
+            var color = Colors.Black;
+            if (_view.PieColors == null)
+            {
+                color = _view.PieColorTemp ?? color;
+            }
+            else
+            {
+                opacity = 1;
+                if (_view.PieColors.Count > (index - 1))
+                {
+                    color = _view.PieColors[index - 1];
+                }
+                else
+                {
+                    double t1 = (double)(index) / _view.PieColors.Count;
+                    var t2 = (int)Math.Ceiling(t1) - 1;
+                    var ind = index - (_view.PieColors.Count * t2) - 1;
+                    color = _view.PieColors[ind];
+                }
+
+            }
             using (var loadingPaint = new SKPaint
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill,
-                Color = _view.Color.ToSKColor().WithAlpha((byte)(0xFF * opacity))
+                Color = color.ToSKColor().WithAlpha((byte)(0xFF * opacity))
             })
             {
                 float radiusA = _radius;
@@ -347,4 +430,3 @@ namespace Pie
         }
     }
 }
-

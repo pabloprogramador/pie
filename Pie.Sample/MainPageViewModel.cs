@@ -34,6 +34,34 @@ namespace Pie.Sample
             }
         }
 
+        private Color _pieColor;
+        public Color PieColor
+        {
+            get { return _pieColor; }
+            set
+            {
+                if (_pieColor != value)
+                {
+                    _pieColor = value;
+                    OnPropertyChanged(nameof(PieColor));
+                }
+            }
+        }
+
+        private List<Color> _pieColors;
+        public List<Color> PieColors
+        {
+            get { return _pieColors; }
+            set
+            {
+                if (_pieColors != value)
+                {
+                    _pieColors = value;
+                    OnPropertyChanged(nameof(PieColors));
+                }
+            }
+        }
+
         public MainPageViewModel()
 		{
             ChangeHalfCircleCommand = new Command(ChangeHalfCircle);
@@ -55,6 +83,7 @@ namespace Pie.Sample
         public ICommand ChangeValues1Command { protected set; get; }
         private void ChangeValues1()
         {
+            PieColors = null;
             Values = new List<double>() { 10, 1000, 500, 50 };
             IsHalfCircle = true;
         }
@@ -62,6 +91,7 @@ namespace Pie.Sample
         public ICommand ChangeValues2Command { protected set; get; }
         private void ChangeValues2()
         {
+            PieColors = null;
             Values = new List<double>() { 300, 200 };
             IsHalfCircle = true;
         }
@@ -69,6 +99,7 @@ namespace Pie.Sample
         public ICommand ChangeValues3Command { protected set; get; }
         private void ChangeValues3()
         {
+            PieColors = null;
             Values = new List<double>() { 230, 8, 25, 300, 2, 90 };
             IsHalfCircle = false;
         }
@@ -76,19 +107,27 @@ namespace Pie.Sample
         public ICommand ChangeValues4Command { protected set; get; }
         private void ChangeValues4()
         {
+            PieColors = null;
+            PieColor = Color.FromArgb("#84CEB2");
             Values = new List<double>() { 30, 100, 50, 2 };
         }
 
         public ICommand ChangeValues5Command { protected set; get; }
         private void ChangeValues5()
         {
+            PieColors = null;
+            PieColor = Color.FromArgb("#B7ADE8");
             Values = new List<double>() { 1000, 50 ,  2, 104};
         }
 
         public ICommand ChangeValues6Command { protected set; get; }
         private void ChangeValues6()
         {
-            Values = new List<double>() { 23, 80, 30, 23, 90 };
+            PieColors = new List<Color>()
+            {
+                Colors.Red, Colors.Yellow, Colors.Green, Colors.Blue
+            };
+            Values = new List<double>() { 23, 80, 30, 23, 90, 30, 50, 60, 90 };
         }
 
         public ICommand ClearValuesCommand { protected set; get; }
