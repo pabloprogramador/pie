@@ -18,7 +18,7 @@
                 PieColor="{Binding PieColor}"
                 PieColors="{Binding PieColors}"
                 HorizontalOptions="FillAndExpand"
-                HeightRequest="400"
+                HeightRequest="200"
                 TimeAnimation="500"
                 SizeCircle="360"
                 StrokeWidth="80"

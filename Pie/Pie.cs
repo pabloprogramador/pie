@@ -123,7 +123,17 @@ namespace Pie
         protected async override void OnSizeAllocated(double width, double height)
         {
             base.OnSizeAllocated(width, height);
-            _pieSkia = new PieSkia(this, width - (MarginWholeCircle * 2), height);
+            while(width < 0)
+            {
+                await Task.Delay(200).ConfigureAwait(true);
+            }
+            var fix = width - (MarginWholeCircle * 2);
+            if(this.Height != fix)
+            {
+                this.HeightRequest = fix;
+                return;
+            }
+            _pieSkia = new PieSkia(this, fix, height);
             this.Children.Add(_pieSkia);
             ChangeValues();
         }
@@ -283,9 +293,7 @@ namespace Pie
                 int i = 1;
                 double totalO = 1 - _view.MinOpacity;
                 var totalV = _view.Values.Count;
-                //i need this code for maintance
-                //double fix = totalTemp - totalV;
-                //fix = fix > 0 ? fix : 0;
+                
                 foreach (var item in _view.ValuesTemp.ToList())
                 {
                     if (_view.ValuesTemp[i - 1] == 0)
@@ -296,7 +304,7 @@ namespace Pie
                     {
                         _total = _view.ValuesTemp.Sum();
                         int end = (int)Math.Round(item * (_view.SizeCircle - (_view.Spacing * totalV)) / _total);
-                        double opacity = i >= totalV ? _view.MinOpacity : 1 - (i * totalO / totalV) + _view.MinOpacity;
+                        double opacity = i >= totalV ? _view.MinOpacity : 1 - (i * totalO / totalV);
                         Item(i, pos, end, opacity, canvas, bounds);
                         pos += (end + _view.Spacing);
                         i++;
